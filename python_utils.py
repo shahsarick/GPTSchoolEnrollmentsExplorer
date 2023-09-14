@@ -56,8 +56,9 @@ def generate_primer(df, df_name):
     Add a title. Use st.plotly or plotly.express to visualize."
     Using Python version 3.9.12, only create a script using the dataframe "df" if the user asked for a graph. 
     Do not give a y/n answer in the code or try to take any user input. 
-    Graph should be created using st.plotly or plotly.express. If there is only a single row, just display a table.
-    IF the given sql query is only one column, don't chart, just display the table.
+    Graph should be created using st.plotly or plotly.express. If there is only a single row, manipulate it to be able to chart the data.
+    IF the given sql query is only one column, manipulate it to get it in the right format for a chart if it has multiple rows.
+    If its just one column one row, don't chart, just display the table.
     Make sure that variable names are the same as the sql.
     """
     primer_code = (
