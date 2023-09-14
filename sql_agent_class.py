@@ -143,10 +143,10 @@ class SQLAgent:
         """
         Main function to handle user input and generate responses.
         """
-        MODEL = st.sidebar.selectbox(
+        model = st.sidebar.selectbox(
             label="Model", options=["gpt-3.5-turbo-16k-0613", "gpt-4"]
         )
-        st.session_state["selected_model"] = MODEL
+        st.session_state["selected_model"] = model
         user_input = st.text_input("Enter your query:")
         st.session_state["user_input"] = user_input
 
