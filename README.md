@@ -4,8 +4,8 @@ Getting Started
 
 1. Clone the repository and navigate into the project directory.
 ```
-git clone <repository_url>
-cd <project_directory>
+git clone [<repository_url>](https://github.com/shahsarick/GPTSchoolEnrollmentsExplorer.git)
+cd GPTSchoolEnrollmentsExplorer
 ```
 2.  Rename the env.example file to .env and replace the placeholder with your OpenAI API key.
 3.  Install the required Python packages.
