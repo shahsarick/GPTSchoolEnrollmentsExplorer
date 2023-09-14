@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Sep 13 13:13:37 2023
 
 @author: Sarick
 """
@@ -42,23 +41,10 @@ Here is the SQL query to obtain the results:
        F = Female
        X = Non-Binary (Beginning 2019–20)
        Z = Missing"
-   KDGN: kindergarden
-   GR_1: Students enrolled in grade one.
-   GR_2: Students enrolled in grade two.
-   GR_3: Students enrolled in grade three.
-   GR_4: Students enrolled in grade four.
-   GR_5: Students enrolled in grade five.
-   GR_6: Students enrolled in grade six.
-   GR_7: Students enrolled in grade seven.
-   GR_8: Students enrolled in grade eight.
+   KDGN to GR_12: Students in each grade
    UNGR_ELM: Students enrolled in ungraded elementary classes in grades kindergarten through grade eight.
-   GR_9: Students enrolled in grade nine.
-   GR_10: Students enrolled in grade ten.
-   GR_11: Students enrolled in grade eleven.
-   GR_12: Students enrolled in grade twelve.
    UNGR_SEC: Students enrolled in ungraded secondary classes in grades nine through twelve.
    ENR_TOTAL: Total school enrollment for fields Kindergarten (KDGN) through grade twelve (GR_12) plus ungraded elementary (UNGR_ELM) and ungraded secondary classes (UNGR_SEC). Adults in kindergarten through grade twelve programs are not included.
-   ADULT: Adults enrolled in kindergarten through grade twelve programs. This data does not include adults in independent study.
    
    
    Use these definitions to help generate the query. Account for user potentially using the wrong case or spelling 
