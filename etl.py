@@ -73,6 +73,19 @@ def enrollments_load(file_path, sep, encoding, table, disk_engine):
     load_data(enrollments_df, table, disk_engine)
 
 def engine_table_init():
+    """
+    Returns
+    -------
+    disk_engine :
+        The disk engine for SQLAlchemy
+    metadata :
+        DB Metadata
+    enrollments : 
+        Enrollments table in DB
+    county_demographics : 
+        Demographics data in DB
+
+    """
     disk_engine = create_engine("sqlite:///my_lite_store.db")
     metadata = MetaData()
     enrollments = Table("enrollments", metadata, autoload_with=disk_engine)
