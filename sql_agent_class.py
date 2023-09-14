@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Created on Wed Sep 13 18:08:52 2023
+
 @author: Sarick
 """
 from dotenv import load_dotenv
@@ -7,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 import re
 import os
-
+import time
 import pandas as pd
 import streamlit as st
 from sqlalchemy import create_engine
@@ -117,7 +119,8 @@ class SQLAgent:
         engine = create_engine(self.db_uri)
         df = pd.read_sql_query(query, engine)
         return df
-
+    
+    
     def table_previews(self):
         """
 
@@ -143,16 +146,17 @@ class SQLAgent:
         """
         Main function to handle user input and generate responses.
         """
-        model = st.sidebar.selectbox(
+        MODEL = st.sidebar.selectbox(
             label="Model", options=["gpt-3.5-turbo-16k-0613", "gpt-4"]
         )
-        st.session_state["selected_model"] = model
+        st.session_state["selected_model"] = MODEL
         user_input = st.text_input("Enter your query:")
         st.session_state["user_input"] = user_input
 
         self.table_previews()
-
+        
         if user_input:
+            progress = st.progress(0)
             output, generated_query = self.generate_query_response(user_input)
             st.session_state["generated_query"] = generated_query
             st.session_state["output"] = output
@@ -161,8 +165,9 @@ class SQLAgent:
             if generated_query != "No SQL code found":
                 with st.expander("SQL Query"):
                     st.code(generated_query)
-
+                progress.progress(.5)
                 df = self.generate_dataframe(st.session_state["generated_query"])
+                progress.progress(.6)
                 st.session_state["data_frame"] = df
 
                 primer_description, primer_code = generate_primer(df, "df")
@@ -176,13 +181,18 @@ class SQLAgent:
                     answer = generate_code(
                         question_to_ask, "gpt-4", api_key=self.openai_api_key
                     )
+                    progress.progress(.8)
                     answer = primer_code + answer
                     try:
                         st.write(exec(answer))
+                        progress.progress(.9)
                     except Exception as exec_error:
                         st.write("Could not graph", exec_error)
 
                     st.markdown("### The Code")
+                    progress.progress(1.0)
+                    time.sleep(.4)
+                    progress.empty()
                     with st.expander("Code Written by Agent"):
                         st.code(answer)
 
