@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Sep 13 18:08:52 2023
-
 @author: Sarick
 """
 from dotenv import load_dotenv
+
 load_dotenv()
 import re
 import os
@@ -34,6 +33,7 @@ class SQLAgent:
     gets the answer, and passes the dataframe onto pythonrepl for code creation
     for visualization in Streamlit.
     """
+
     def __init__(self):
         """
         Initialize the SQLAgent with database connection and toolkit setup.
@@ -41,20 +41,20 @@ class SQLAgent:
         self.db_uri = "sqlite:///my_lite_store.db"
         self.db_instance = SQLDatabase.from_uri(self.db_uri)
         self.toolkit = SQLDatabaseToolkit(
-            db=self.db_instance, 
-            llm=ChatOpenAI(temperature=0, model=st.session_state['selected_model'])
+            db=self.db_instance,
+            llm=ChatOpenAI(temperature=0, model=st.session_state["selected_model"]),
         )
         self.openai_api_key = os.getenv("OPEN_API_KEY")
         self.agent_executor = create_sql_agent(
-            llm=ChatOpenAI(temperature=0,  model=st.session_state['selected_model']),
+            llm=ChatOpenAI(temperature=0, model=st.session_state["selected_model"]),
             toolkit=self.toolkit,
             verbose=True,
             prefix=SQL_PREFIX,
             suffix=SQL_SUFFIX,
             format_instructions=FORMAT_INSTRUCTIONS,
             agent_type=AgentType.OPENAI_FUNCTIONS,
-            agent_executor_kwargs={'return_intermediate_steps': True},
-            max_iterations=5
+            agent_executor_kwargs={"return_intermediate_steps": True},
+            max_iterations=5,
         )
 
     def generate_query_response(self, message):
@@ -63,7 +63,7 @@ class SQLAgent:
         Parameters
         ----------
         message : (str)
-            The users query 
+            The users query
 
         Returns
         -------
@@ -74,7 +74,7 @@ class SQLAgent:
 
         """
         response = self.agent_executor(message)
-        output = response['output']
+        output = response["output"]
         split_string = output.split("Here is the SQL query to obtain the results:")
         split_string[1] = self.extract_sql_code(split_string[1])
         return split_string[0], split_string[1]
@@ -83,10 +83,10 @@ class SQLAgent:
     def extract_sql_code(text):
         """
         extract sql from the agent response
-        
+
         Parameters
         ----------
-        text : The text output of the agent 
+        text : The text output of the agent
 
         Returns
         -------
@@ -101,11 +101,11 @@ class SQLAgent:
     def generate_dataframe(self, query):
         """
         use the agent generated sql query to get a dataframe for charting purposes
-        
+
 
         Parameters
         ----------
-        query (str): 
+        query (str):
             The extracted sql query from above
 
         Returns
@@ -127,8 +127,12 @@ class SQLAgent:
 
         """
         engine = create_engine(self.db_uri)
-        enrollments_preview = pd.read_sql_query('select * from enrollments limit 5', engine)
-        demographics_preview = pd.read_sql_query('select * from county_demographics limit 5', engine)
+        enrollments_preview = pd.read_sql_query(
+            "select * from enrollments limit 5", engine
+        )
+        demographics_preview = pd.read_sql_query(
+            "select * from county_demographics limit 5", engine
+        )
 
         st.sidebar.write("Enrollments Data Preview")
         st.sidebar.dataframe(enrollments_preview)
@@ -143,8 +147,9 @@ class SQLAgent:
             label="Model", options=["gpt-3.5-turbo-16k-0613", "gpt-4"]
         )
         st.session_state["selected_model"] = MODEL
-        st.session_state['user_input'] = st.text_input("Enter your query:")
-        user_input = st.session_state['user_input']
+        user_input = st.text_input("Enter your query:")
+        st.session_state["user_input"] = user_input
+
         self.table_previews()
 
         if user_input:
@@ -154,33 +159,40 @@ class SQLAgent:
             st.write(output)
 
             if generated_query != "No SQL code found":
-                with st.expander('SQL Query'):
+                with st.expander("SQL Query"):
                     st.code(generated_query)
 
                 df = self.generate_dataframe(st.session_state["generated_query"])
-                st.session_state['data_frame'] = df
+                st.session_state["data_frame"] = df
 
-                primer_description, primer_code = generate_primer(df, 'df')
-                python_prompt_formatted = PYTHON_PROMPT.format(user_input, generated_query)
-                question_to_ask = format_primer(primer_description, primer_code, python_prompt_formatted)
+                primer_description, primer_code = generate_primer(df, "df")
+                python_prompt_formatted = PYTHON_PROMPT.format(
+                    user_input, generated_query
+                )
+                question_to_ask = format_primer(
+                    primer_description, primer_code, python_prompt_formatted
+                )
                 try:
-                    answer = generate_code(question_to_ask, 'gpt-4', api_key=self.openai_api_key)
+                    answer = generate_code(
+                        question_to_ask, "gpt-4", api_key=self.openai_api_key
+                    )
                     answer = primer_code + answer
                     try:
                         st.write(exec(answer))
                     except Exception as exec_error:
-                        st.write('Could not graph', exec_error)
+                        st.write("Could not graph", exec_error)
 
-                    st.markdown('### The Code')
-                    with st.expander('Code Written by Agent'):
+                    st.markdown("### The Code")
+                    with st.expander("Code Written by Agent"):
                         st.code(answer)
 
                 except Exception as general_exception:
                     st.write(general_exception)
 
-if __name__ == '__main__':
-    if 'selected_model' not in st.session_state:
-        st.session_state['selected_model'] = "gpt-3.5-turbo-16k-0613"
-        
+
+if __name__ == "__main__":
+    if "selected_model" not in st.session_state:
+        st.session_state["selected_model"] = "gpt-3.5-turbo-16k-0613"
+
     SQL_AGENT = SQLAgent()
     SQL_AGENT.main()
