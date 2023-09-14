@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Sep  9 13:12:55 2023
-
 @author: Sarick
 """
-
+import argparse
 import pandas as pd
 from sqlalchemy import create_engine, MetaData, Table
+from python_utils import unzip
 
 # This code replaces the database tables with new data.
 # In a production environment, appending would be used instead of replacing.
@@ -73,17 +72,32 @@ def enrollments_load(file_path, sep, encoding, table, disk_engine):
     enrollments_df = pd.read_csv(file_path, sep=sep, encoding=encoding)
     load_data(enrollments_df, table, disk_engine)
 
-
-if __name__ == "__main__":
+def engine_table_init():
     disk_engine = create_engine("sqlite:///my_lite_store.db")
     metadata = MetaData()
-
     enrollments = Table("enrollments", metadata, autoload_with=disk_engine)
-    county_demographics = Table(
-        "county_demographics", metadata, autoload_with=disk_engine
-    )
+    county_demographics = Table("county_demographics", metadata, autoload_with=disk_engine)
+    return disk_engine, metadata, enrollments, county_demographics
 
-    county_demographics_load(
-        "California_DemographicsByCounty_sample.xlsx", county_demographics, disk_engine
-    )
-    enrollments_load("filesenrps.asp.tsv", "\t", "latin-1", enrollments, disk_engine)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Load data into SQLite database')
+    parser.add_argument('-demographics', action='store_true', help='Load demographics xlsx file')
+    parser.add_argument('-enrollments', action='store_true', help='Load enrollments tsv file')
+    args = parser.parse_args()
+
+    try:
+        disk_engine, metadata, enrollments, county_demographics = engine_table_init()
+    except:
+        unzip('datasources_db.zip')
+        disk_engine, metadata, enrollments, county_demographics = engine_table_init()
+
+    if args.demographics:
+        print('loading demographic data')
+        county_demographics_load("California_DemographicsByCounty_sample.xlsx", county_demographics, disk_engine)
+    
+    if args.enrollments:
+        print('loading enrollments data')
+        enrollments_load("filesenrps.asp.tsv", "\t", "latin-1", enrollments, disk_engine)
+
+    if not args.demographics and not args.enrollments:
+        print("No flags provided, just connected to SQLite database.")
