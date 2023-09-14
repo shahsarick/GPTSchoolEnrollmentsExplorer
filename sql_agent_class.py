@@ -161,15 +161,16 @@ class SQLAgent:
             st.session_state["generated_query"] = generated_query
             st.session_state["output"] = output
             st.write(output)
-
+            #if sql is producted, display it and feed query to generate code
             if generated_query != "No SQL code found":
                 with st.expander("SQL Query"):
                     st.code(generated_query)
                 st.session_state['progress'].progress(.5)
+                #generate the dataframe from the agent generated sql query
                 df = self.generate_dataframe(st.session_state["generated_query"])
                 st.session_state['progress'].progress(.6)
                 st.session_state["data_frame"] = df
-
+                #generate prefix and suffix
                 primer_description, primer_code = generate_primer(df, "df")
                 python_prompt_formatted = PYTHON_PROMPT.format(
                     user_input, generated_query
@@ -177,6 +178,7 @@ class SQLAgent:
                 question_to_ask = format_primer(
                     primer_description, primer_code, python_prompt_formatted
                 )
+                #try to generate and execute the code. 
                 try:
                     st.session_state['answer'] = generate_code(
                         question_to_ask, "gpt-4", api_key=self.openai_api_key
