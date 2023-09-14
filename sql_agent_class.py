@@ -29,7 +29,15 @@ langchain.llm_cache = SQLiteCache(
 
 
 class SQLAgent:
+    """
+    SQLAgent class handles user queries, converts natural language into SQL queries,
+    gets the answer, and passes the dataframe onto pythonrepl for code creation
+    for visualization in Streamlit.
+    """
     def __init__(self):
+        """
+        Initialize the SQLAgent with database connection and toolkit setup.
+        """
         self.db_uri = "sqlite:///my_lite_store.db"
         self.db_instance = SQLDatabase.from_uri(self.db_uri)
         self.toolkit = SQLDatabaseToolkit(
@@ -50,6 +58,21 @@ class SQLAgent:
         )
 
     def generate_query_response(self, message):
+        """
+
+        Parameters
+        ----------
+        message : (str)
+            The users query 
+
+        Returns
+        -------
+        split_string[0] (str)
+            the natural language answer to the query
+        split_string[1] (str)
+            the sql portion of the query that needs to be further processed
+
+        """
         response = self.agent_executor(message)
         output = response['output']
         split_string = output.split("Here is the SQL query to obtain the results:")
@@ -58,17 +81,51 @@ class SQLAgent:
 
     @staticmethod
     def extract_sql_code(text):
+        """
+        extract sql from the agent response
+        
+        Parameters
+        ----------
+        text : The text output of the agent 
+
+        Returns
+        -------
+        sql_match.group(1) (str) the sql only portion of the response
+
+        """
         sql_match = re.search(r"```SQL\n(.+?)\n```", text, re.DOTALL)
         if sql_match:
             return sql_match.group(1)
         return "No SQL code found"
 
     def generate_dataframe(self, query):
+        """
+        use the agent generated sql query to get a dataframe for charting purposes
+        
+
+        Parameters
+        ----------
+        query (str): 
+            The extracted sql query from above
+
+        Returns
+        -------
+        df : (Pandas DataFrame)
+            The sql query output in a pandas dataframe of the agent generated query
+
+        """
         engine = create_engine(self.db_uri)
-        data_frame = pd.read_sql_query(query, engine)
-        return data_frame
+        df = pd.read_sql_query(query, engine)
+        return df
 
     def table_previews(self):
+        """
+
+        Returns
+        -------
+        A streamlit preview of the first 5 rows of each table.
+
+        """
         engine = create_engine(self.db_uri)
         enrollments_preview = pd.read_sql_query('select * from enrollments limit 5', engine)
         demographics_preview = pd.read_sql_query('select * from county_demographics limit 5', engine)
@@ -79,6 +136,9 @@ class SQLAgent:
         st.sidebar.dataframe(demographics_preview)
 
     def main(self):
+        """
+        Main function to handle user input and generate responses.
+        """
         MODEL = st.sidebar.selectbox(
             label="Model", options=["gpt-3.5-turbo-16k-0613", "gpt-4"]
         )
