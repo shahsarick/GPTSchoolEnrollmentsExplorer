@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Sep 13 18:08:52 2023
-
 @author: Sarick
 """
 from dotenv import load_dotenv
-
 load_dotenv()
 import re
 import os
@@ -42,13 +39,16 @@ class SQLAgent:
         """
         self.db_uri = "sqlite:///my_lite_store.db"
         self.db_instance = SQLDatabase.from_uri(self.db_uri)
+        self.openai_api_key = os.getenv("OPEN_API_KEY")
         self.toolkit = SQLDatabaseToolkit(
             db=self.db_instance,
-            llm=ChatOpenAI(temperature=0, model=st.session_state["selected_model"]),
+            llm=ChatOpenAI(temperature=0, model=st.session_state["selected_model"],
+                           openai_api_key = self.openai_api_key),
         )
-        self.openai_api_key = os.getenv("OPEN_API_KEY")
+        
         self.agent_executor = create_sql_agent(
-            llm=ChatOpenAI(temperature=0, model=st.session_state["selected_model"]),
+            llm=ChatOpenAI(temperature=0, model=st.session_state["selected_model"],
+                           openai_api_key = self.openai_api_key),
             toolkit=self.toolkit,
             verbose=True,
             prefix=SQL_PREFIX,
@@ -178,9 +178,10 @@ class SQLAgent:
                     primer_description, primer_code, python_prompt_formatted
                 )
                 try:
-                    answer = generate_code(
+                    st.session_state['answer'] = generate_code(
                         question_to_ask, "gpt-4", api_key=self.openai_api_key
                     )
+                    answer = st.session_state['answer']
                     st.session_state['progress'].progress(.8)
                     answer = primer_code + answer
                     try:
@@ -188,6 +189,7 @@ class SQLAgent:
                         st.session_state['progress'].progress(.9)
                     except Exception as exec_error:
                         st.write("Could not graph", exec_error)
+                        
 
                     st.markdown("### The Code")
                     st.session_state['progress'].progress(1.0)
