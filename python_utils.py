@@ -1,5 +1,5 @@
 import openai
-
+import zipfile
 
 def generate_code(question, model_type, api_key):
     """
@@ -65,3 +65,7 @@ def generate_primer(df, df_name):
     )
     primer_code += f"df = {df_name}.copy()\n"
     return primer_desc, primer_code
+
+def unzip(file):
+    with zipfile.ZipFile(file, 'r') as zip_ref:
+      zip_ref.extractall()
