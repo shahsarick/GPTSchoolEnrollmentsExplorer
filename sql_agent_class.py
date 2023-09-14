@@ -157,10 +157,10 @@ class SQLAgent:
                 with st.expander('SQL Query'):
                     st.code(generated_query)
 
-                data_frame = self.generate_dataframe(st.session_state["generated_query"])
-                st.session_state['data_frame'] = data_frame
+                df = self.generate_dataframe(st.session_state["generated_query"])
+                st.session_state['data_frame'] = df
 
-                primer_description, primer_code = generate_primer(st.session_state['data_frame'], 'data_frame')
+                primer_description, primer_code = generate_primer(df, 'df')
                 python_prompt_formatted = PYTHON_PROMPT.format(user_input, generated_query)
                 question_to_ask = format_primer(primer_description, primer_code, python_prompt_formatted)
                 try:
