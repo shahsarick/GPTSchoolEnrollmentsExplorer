@@ -1,5 +1,6 @@
 # GPTSchoolEnrollmentsExplorer
 A project that explores the data for enrollment data in California as well as demographic county data.
+
 Getting Started
 
 1. Clone the repository and navigate into the project directory.
@@ -8,11 +9,11 @@ git clone https://github.com/shahsarick/GPTSchoolEnrollmentsExplorer.git
 cd GPTSchoolEnrollmentsExplorer
 ```
 2.  Rename the env.example file to .env and replace the placeholder with your OpenAI API key.
-3.  Install the required Python packages.
+3.  Make sure you're in an environment with python 3.9.12 or higher. Install the required Python packages. 
    ```pip install -r requirements.txt```
-4. run the ETL script to load data into the SQLite Database for the first time.
+4. run the ETL script to load data into the SQLite Database for the first time. 
    ```python etl.py```
-5. Start the Streamlit application.
+5. Start the Streamlit application. 
    ```streamlit run sql_agent_class.py```
 
 The application will open in your default web browser.
