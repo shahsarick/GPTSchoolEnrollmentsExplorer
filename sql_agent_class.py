@@ -64,7 +64,7 @@ class SQLAgent:
 
         Parameters
         ----------
-        message : (str)
+        message (str):
             The users query
 
         Returns
@@ -88,7 +88,7 @@ class SQLAgent:
 
         Parameters
         ----------
-        text : The text output of the agent
+        text (str): The text output of the agent
 
         Returns
         -------
@@ -112,7 +112,7 @@ class SQLAgent:
 
         Returns
         -------
-        df : (Pandas DataFrame)
+        df  (Pandas DataFrame):
             The sql query output in a pandas dataframe of the agent generated query
 
         """
