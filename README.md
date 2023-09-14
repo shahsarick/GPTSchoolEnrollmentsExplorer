@@ -15,6 +15,7 @@ cd GPTSchoolEnrollmentsExplorer
    ```python etl.py```
 5. Start the Streamlit application. 
    ```streamlit run sql_agent_class.py```
+6. Run ```python tests.py``` to unit test the validate schema and load data functions in etl.py
 
 The application will open in your default web browser.
 
