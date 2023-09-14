@@ -1,23 +1,32 @@
-import openai
 import zipfile
+
+from langchain.chat_models import ChatOpenAI
+from langchain.schema import (
+    HumanMessage,
+    SystemMessage
+)
+
+import langchain
+from langchain.cache import SQLiteCache
+
+langchain.llm_cache = SQLiteCache(
+    database_path=".langchain.db"
+)  # caches queries that are the same.
 
 def generate_code(question, model_type, api_key):
     """
     Generate Python code script. The script should only include code, no comments.
     What is returned is code that needs some light modification.
     """
-    task = (
-        "Generate Python Code Script. The script should only include code, no comments."
-    )
-    openai.api_key = api_key
-    response = openai.ChatCompletion.create(
-        model=model_type,
+    task = "Generate Python Code Script. The script should only include code, no comments."
+    chat_model = ChatOpenAI(temperature=0, model=model_type, openai_api_key = api_key)
+    response = chat_model(
         messages=[
-            {"role": "system", "content": task},
-            {"role": "user", "content": question},
+            SystemMessage(content=task),
+            HumanMessage(content=question)
         ],
     )
-    code = response["choices"][0]["message"]["content"]
+    code = response.content
     return format_code(code)
 
 
