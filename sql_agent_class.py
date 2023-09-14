@@ -1,0 +1,126 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Sep 13 18:08:52 2023
+
+@author: Sarick
+"""
+from dotenv import load_dotenv
+load_dotenv()
+import re
+import os
+
+import pandas as pd
+import streamlit as st
+from sqlalchemy import create_engine
+from langchain.agents import create_sql_agent
+from langchain.utilities import SQLDatabase
+from langchain.agents.agent_toolkits import SQLDatabaseToolkit
+from langchain.chat_models import ChatOpenAI
+from langchain.agents.agent_types import AgentType
+from prompt import SQL_PREFIX, SQL_SUFFIX, PYTHON_PROMPT, FORMAT_INSTRUCTIONS
+from python_utils import generate_code, format_primer, generate_primer
+
+import langchain
+from langchain.cache import SQLiteCache
+
+langchain.llm_cache = SQLiteCache(
+    database_path=".langchain.db"
+)  # caches queries that are the same.
+
+
+class SQLAgent:
+    def __init__(self):
+        self.db_uri = "sqlite:///my_lite_store.db"
+        self.db_instance = SQLDatabase.from_uri(self.db_uri)
+        self.toolkit = SQLDatabaseToolkit(
+            db=self.db_instance, 
+            llm=ChatOpenAI(temperature=0, model=st.session_state['selected_model'])
+        )
+        self.openai_api_key = os.getenv("OPEN_API_KEY")
+        self.agent_executor = create_sql_agent(
+            llm=ChatOpenAI(temperature=0,  model=st.session_state['selected_model']),
+            toolkit=self.toolkit,
+            verbose=True,
+            prefix=SQL_PREFIX,
+            suffix=SQL_SUFFIX,
+            format_instructions=FORMAT_INSTRUCTIONS,
+            agent_type=AgentType.OPENAI_FUNCTIONS,
+            agent_executor_kwargs={'return_intermediate_steps': True},
+            max_iterations=5
+        )
+
+    def generate_query_response(self, message):
+        response = self.agent_executor(message)
+        output = response['output']
+        split_string = output.split("Here is the SQL query to obtain the results:")
+        split_string[1] = self.extract_sql_code(split_string[1])
+        return split_string[0], split_string[1]
+
+    @staticmethod
+    def extract_sql_code(text):
+        sql_match = re.search(r"```SQL\n(.+?)\n```", text, re.DOTALL)
+        if sql_match:
+            return sql_match.group(1)
+        return "No SQL code found"
+
+    def generate_dataframe(self, query):
+        engine = create_engine(self.db_uri)
+        data_frame = pd.read_sql_query(query, engine)
+        return data_frame
+
+    def table_previews(self):
+        engine = create_engine(self.db_uri)
+        enrollments_preview = pd.read_sql_query('select * from enrollments limit 5', engine)
+        demographics_preview = pd.read_sql_query('select * from county_demographics limit 5', engine)
+
+        st.sidebar.write("Enrollments Data Preview")
+        st.sidebar.dataframe(enrollments_preview)
+        st.sidebar.write("County Demographics Data Preview")
+        st.sidebar.dataframe(demographics_preview)
+
+    def main(self):
+        MODEL = st.sidebar.selectbox(
+            label="Model", options=["gpt-3.5-turbo-16k-0613", "gpt-4"]
+        )
+        st.session_state["selected_model"] = MODEL
+        st.session_state['user_input'] = st.text_input("Enter your query:")
+        user_input = st.session_state['user_input']
+        self.table_previews()
+
+        if user_input:
+            output, generated_query = self.generate_query_response(user_input)
+            st.session_state["generated_query"] = generated_query
+            st.session_state["output"] = output
+            st.write(output)
+
+            if generated_query != "No SQL code found":
+                with st.expander('SQL Query'):
+                    st.code(generated_query)
+
+                data_frame = self.generate_dataframe(st.session_state["generated_query"])
+                st.session_state['data_frame'] = data_frame
+
+                primer_description, primer_code = generate_primer(st.session_state['data_frame'], 'data_frame')
+                python_prompt_formatted = PYTHON_PROMPT.format(user_input, generated_query)
+                question_to_ask = format_primer(primer_description, primer_code, python_prompt_formatted)
+                try:
+                    answer = generate_code(question_to_ask, 'gpt-4', api_key=self.openai_api_key)
+                    answer = primer_code + answer
+                    try:
+                        st.write(exec(answer))
+                    except Exception as exec_error:
+                        st.write('Could not graph', exec_error)
+
+                    st.markdown('### The Code')
+                    with st.expander('Code Written by Agent'):
+                        st.code(answer)
+
+                except Exception as general_exception:
+                    st.write(general_exception)
+
+if __name__ == '__main__':
+    if 'selected_model' not in st.session_state:
+        st.session_state['selected_model'] = "gpt-3.5-turbo-16k-0613"
+        
+    SQL_AGENT = SQLAgent()
+    SQL_AGENT.main()
